@@ -103,6 +103,13 @@
             flex: 1;
         }
         
+        .due-date-note {
+            font-style: italic;
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 0px;
+        }
+        
         .submit-btn {
             background: linear-gradient(135deg, #3b8fc2 0%, #1E7EB4 100%);
             color: white;
@@ -125,6 +132,13 @@
             background: #ccc;
             cursor: not-allowed;
             transform: none;
+        }
+        
+        .scoring-note {
+            margin-top: 15px;
+            font-size: 0.9em;
+            color: #666;
+            line-height: 1.4;
         }
         
         .visualization-section {
@@ -256,6 +270,7 @@
                                     </select>
                                 </div>
                             </div>
+                            <div class="due-date-note">Due date is September 6, 2025</div>
                         </div>
                         
                         <div class="form-group">
@@ -294,7 +309,16 @@
                             </div>
                         </div>
                         
+                        <div class="form-group">
+                            <label for="firstName">First Name</label>
+                            <input type="text" id="firstName" name="firstName" required>
+                        </div>
+                        
                         <button type="submit" class="submit-btn">Submit</button>
+                        
+                        <div class="scoring-note">
+                            Unless somebody guesses the actual name, points will be awarded for how close your guess was; the fewest points wins.
+                        </div>
                         
                         <div id="message"></div>
                     </form>
@@ -448,6 +472,9 @@
                         <div class="prediction-name">${pred.name}</div>
                         <div class="prediction-details">
                             ${formatDate(pred.month, pred.day)} at ${formatTime(pred.hour, pred.minute)}
+                        </div>
+                        <div class="prediction-details">
+                            Name: ${pred.firstName || 'Not specified'}
                         </div>
                     </div>
                     <div class="prediction-details">
@@ -638,6 +665,7 @@
                 ounces: parseInt(formData.get('ounces')),
                 inches: parseInt(formData.get('inches')),
                 quarter_inches: parseFloat(formData.get('quarter_inches')),
+                firstName: formData.get('firstName'),
                 timestamp: Date.now()
             };
             
@@ -674,8 +702,6 @@
     </script>
 </body>
 </html>
-
-
 
 
 
