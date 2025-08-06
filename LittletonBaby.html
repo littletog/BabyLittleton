@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Baby Pool - Keri & Victor Littleton</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .header h2 {
+            font-size: 1.8em;
+            font-weight: normal;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: flex;
+            min-height: 600px;
+        }
+        
+        .form-section {
+            flex: 1;
+            padding: 40px;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #ffecd2 100%);
+            position: relative;
+        }
+        
+        .form-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .form-group {
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            background: white;
+            color: #333;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .submit-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .submit-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .visualization-section {
+            flex: 1;
+            padding: 40px;
+            background: #f8f9fa;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .chart-title {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .predictions-list {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .prediction-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .prediction-item:last-child {
+            border-bottom: none;
+        }
+        
+        .prediction-name {
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .prediction-details {
+            font-size: 0.9em;
+            color: #666;
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #c62828;
+        }
+        
+        .success-message {
+            background: #e8f5e8;
+            color: #2e7d32;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            border-left: 4px solid #2e7d32;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .form-content {
+                margin-left: 0;
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Join the Waiting Game for</h1>
+            <h2>Keri, Victor, and [ ____ ] Littleton</h2>
+        </div>
+        
+        <div class="main-content">
+            <div class="form-section">
+                <div class="form-content">
+                    <form id="babyPoolForm">
+                        <div class="form-group">
+                            <label for="name">Your Name</label>
+                            <input type="text" id="name" name="name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Date & Time</label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <select id="month" name="month" required>
+                                        <option value="">M</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <select id="day" name="day" required>
+                                        <option value="">D</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <select id="hour" name="hour" required>
+                                        <option value="">H</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <select id="minute" name="minute" required>
+                                        <option value="">M</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Weight</label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <select id="pounds" name="pounds" required>
+                                        <option value="">Pounds</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <select id="ounces" name="ounces" required>
+                                        <option value="">Ounces</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Length</label>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <select id="inches" name="inches" required>
+                                        <option value="">Inches</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <select id="quarter_inches" name="quarter_inches" required>
+                                        <option value="">Quarter Inches</option>
+                                        <option value="0">0</option>
+                                        <option value="0.25">0.25</option>
+                                        <option value="0.5">0.5</option>
+                                        <option value="0.75">0.75</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="submit-btn">Submit</button>
+                        
+                        <div id="message"></div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="visualization-section">
+                <div class="chart-container">
+                    <div class="chart-title">Birth Predictions Timeline</div>
+                    <canvas id="dateChart" width="400" height="200"></canvas>
+                </div>
+                
+                <div class="chart-container">
+                    <div class="chart-title">Weight vs Length Predictions</div>
+                    <canvas id="weightLengthChart" width="400" height="200"></canvas>
+                </div>
+                
+                <div class="predictions-list">
+                    <h3>Current Predictions</h3>
+                    <div id="predictionsList">No predictions yet. Be the first!</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let predictions = JSON.parse(localStorage.getItem('babyPoolPredictions') || '[]');
+        
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwzeoU7FJkj2fgfNswMFRanb5fI5xHsRhchjko-UbH35HPowtBXhwA6eUHH6RoPf_NG/exec';
+        
+        function initializeForm() {
+            const months = ['August', 'September', 'October'];
+            
+            const monthSelect = document.getElementById('month');
+            months.forEach((month, index) => {
+                const option = document.createElement('option');
+                option.value = index + 8;
+                option.textContent = month;
+                monthSelect.appendChild(option);
+            });
+            
+            const daySelect = document.getElementById('day');
+            for (let i = 1; i <= 31; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                daySelect.appendChild(option);
+            }
+            
+            const hourSelect = document.getElementById('hour');
+            for (let i = 0; i < 24; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                if (i === 0) option.textContent = '12 AM';
+                else if (i < 12) option.textContent = i + ' AM';
+                else if (i === 12) option.textContent = '12 PM';
+                else option.textContent = (i - 12) + ' PM';
+                hourSelect.appendChild(option);
+            }
+            
+            const minuteSelect = document.getElementById('minute');
+            for (let i = 1; i <= 59; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i.toString().padStart(2, '0');
+                minuteSelect.appendChild(option);
+            }
+            
+            const poundsSelect = document.getElementById('pounds');
+            for (let i = 5; i <= 15; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i.toString().padStart(2, '0');
+                poundsSelect.appendChild(option);
+            }
+            
+            const ouncesSelect = document.getElementById('ounces');
+            for (let i = 0; i <= 15; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                ouncesSelect.appendChild(option);
+            }
+            
+            const inchesSelect = document.getElementById('inches');
+            for (let i = 15; i <= 25; i++) {
+                const option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                inchesSelect.appendChild(option);
+            }
+        }
+        
+        async function sendToGoogleSheets(prediction) {
+            try {
+                await fetch(GOOGLE_SHEET_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(prediction)
+                });
+                return true;
+            } catch (error) {
+                console.error('Google Sheets error:', error);
+                return false;
+            }
+        }
+        
+        function isDuplicatePrediction(formData) {
+            return predictions.some(prediction => 
+                prediction.month == formData.month &&
+                prediction.day == formData.day &&
+                prediction.hour == formData.hour &&
+                prediction.minute == formData.minute &&
+                prediction.pounds == formData.pounds &&
+                prediction.ounces == formData.ounces &&
+                prediction.inches == formData.inches &&
+                prediction.quarter_inches == formData.quarter_inches
+            );
+        }
+        
+        function showMessage(message, isError = false) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.innerHTML = `<div class="${isError ? 'error-message' : 'success-message'}">${message}</div>`;
+            setTimeout(() => messageDiv.innerHTML = '', 5000);
+        }
+        
+        function formatDate(month, day) {
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            return `${months[month - 1]} ${day}`;
+        }
+        
+        function formatTime(hour, minute) {
+            const h = parseInt(hour);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const displayHour = h === 0 ? 12 : (h > 12 ? h - 12 : h);
+            return `${displayHour}:${minute.toString().padStart(2, '0')} ${ampm}`;
+        }
+        
+        function updatePredictionsList() {
+            const listDiv = document.getElementById('predictionsList');
+            
+            if (predictions.length === 0) {
+                listDiv.innerHTML = '<p>No predictions yet. Be the first!</p>';
+                return;
+            }
+            
+            listDiv.innerHTML = predictions.map(pred => `
+                <div class="prediction-item">
+                    <div>
+                        <div class="prediction-name">${pred.name}</div>
+                        <div class="prediction-details">
+                            ${formatDate(pred.month, pred.day)} at ${formatTime(pred.hour, pred.minute)}
+                        </div>
+                    </div>
+                    <div class="prediction-details">
+                        ${pred.pounds}lb ${pred.ounces}oz, ${pred.inches}${pred.quarter_inches > 0 ? '.' + (pred.quarter_inches * 4) : ''}"
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        let dateChart, weightLengthChart;
+        
+        function updateCharts() {
+            // Date histogram
+            const dateData = predictions.filter(pred => pred.month && pred.day).map(pred => {
+                const dateKey = `${pred.month}/${pred.day}`;
+                return { date: dateKey, sortKey: pred.month * 100 + pred.day };
+            });
+            
+            const dateCounts = {};
+            dateData.forEach(item => {
+                dateCounts[item.date] = (dateCounts[item.date] || 0) + 1;
+            });
+            
+            const sortedDates = Object.keys(dateCounts).sort((a, b) => {
+                const aKey = parseInt(a.split('/')[0]) * 100 + parseInt(a.split('/')[1]);
+                const bKey = parseInt(b.split('/')[0]) * 100 + parseInt(b.split('/')[1]);
+                return aKey - bKey;
+            });
+            
+            if (dateChart) dateChart.destroy();
+            
+            const dateCtx = document.getElementById('dateChart').getContext('2d');
+            dateChart = new Chart(dateCtx, {
+                type: 'bar',
+                data: {
+                    labels: sortedDates,
+                    datasets: [{
+                        label: 'Number of Predictions',
+                        data: sortedDates.map(date => dateCounts[date]),
+                        backgroundColor: 'rgba(102, 126, 234, 0.6)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: { title: { display: true, text: 'Predicted Birth Date' }},
+                        y: { 
+                            title: { display: true, text: 'Number of Predictions' }, 
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                callback: function(value) {
+                                    return Number.isInteger(value) ? value : '';
+                                }
+                            }
+                        }
+                    },
+                    plugins: { legend: { display: false }}
+                }
+            });
+            
+            // Weight vs Length - FIXED BOUNDS CALCULATION
+            const weightLengthData = predictions.map(pred => ({
+                x: parseFloat(pred.pounds) + parseFloat(pred.ounces || 0) / 16,
+                y: parseFloat(pred.inches) + parseFloat(pred.quarter_inches || 0),
+                name: pred.name
+            }));
+            
+            if (weightLengthChart) weightLengthChart.destroy();
+            
+            if (weightLengthData.length === 0) {
+                const weightLengthCtx = document.getElementById('weightLengthChart').getContext('2d');
+                weightLengthChart = new Chart(weightLengthCtx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [{
+                            label: 'Weight vs Length',
+                            data: [],
+                            backgroundColor: 'rgba(255, 153, 153, 0.6)',
+                            borderColor: 'rgba(255, 153, 153, 1)',
+                            pointRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { title: { display: true, text: 'Weight (pounds)' }, min: 5, max: 15 },
+                            y: { title: { display: true, text: 'Length (inches)' }, min: 15, max: 25 }
+                        },
+                        plugins: { legend: { display: false }}
+                    }
+                });
+                return;
+            }
+            
+            // Calculate actual min/max from data
+            let minWeight = Math.min(...weightLengthData.map(d => d.x));
+            let maxWeight = Math.max(...weightLengthData.map(d => d.x));
+            let minLength = Math.min(...weightLengthData.map(d => d.y));
+            let maxLength = Math.max(...weightLengthData.map(d => d.y));
+            
+            // FIXED: Round to 0.25 boundaries (find nearest 0.25 boundary OUTSIDE the data range)
+            // For min: find the largest 0.25 boundary that's ≤ min
+            // For max: find the smallest 0.25 boundary that's ≥ max
+            const roundedMinWeight = Math.floor(minWeight / 0.25 - 1) * 0.25;
+            const roundedMaxWeight = Math.ceil(maxWeight / 0.25 + 1) * 0.25;  
+            const roundedMinLength = Math.floor(minLength / 0.25 - 1) * 0.25;
+            const roundedMaxLength = Math.ceil(maxLength / 0.25 + 1) * 0.25;
+            
+            // Ensure minimums don't go below zero
+            const finalMinWeight = Math.max(0, roundedMinWeight);
+            const finalMinLength = Math.max(0, roundedMinLength);
+            
+            const weightLengthCtx = document.getElementById('weightLengthChart').getContext('2d');
+            weightLengthChart = new Chart(weightLengthCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Weight vs Length',
+                        data: weightLengthData,
+                        backgroundColor: 'rgba(255, 153, 153, 0.6)',
+                        borderColor: 'rgba(255, 153, 153, 1)',
+                        pointRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    layout: {
+                        padding: { left: 10, right: 10, top: 10, bottom: 10 }
+                    },
+                    scales: {
+                        x: { 
+                            title: { display: true, text: 'Weight (pounds)' },
+                            min: finalMinWeight,
+                            max: roundedMaxWeight,
+                            ticks: {
+                                stepSize: 0.25,
+                                callback: function(value) {
+                                    return value.toFixed(2);
+                                }
+                            }
+                        },
+                        y: { 
+                            title: { display: true, text: 'Length (inches)' },
+                            min: finalMinLength,
+                            max: roundedMaxLength,
+                            ticks: {
+                                stepSize: 0.25,
+                                callback: function(value) {
+                                    return value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                title: (context) => context[0].raw.name,
+                                label: (context) => {
+                                    const weight = Math.floor(context.raw.x);
+                                    const ounces = Math.round((context.raw.x - weight) * 16);
+                                    const inches = Math.floor(context.raw.y);
+                                    const quarters = ((context.raw.y - inches) * 4).toFixed(0);
+                                    return `${weight}lb ${ounces}oz, ${inches}${quarters > 0 ? '.' + quarters : ''}"`;
+                                }
+                            }
+                        },
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+        
+        document.getElementById('babyPoolForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const prediction = {
+                name: formData.get('name'),
+                email: formData.get('email'),
+                month: parseInt(formData.get('month')),
+                day: parseInt(formData.get('day')),
+                hour: parseInt(formData.get('hour')),
+                minute: parseInt(formData.get('minute')),
+                pounds: parseInt(formData.get('pounds')),
+                ounces: parseInt(formData.get('ounces')),
+                inches: parseInt(formData.get('inches')),
+                quarter_inches: parseFloat(formData.get('quarter_inches')),
+                timestamp: Date.now()
+            };
+            
+            if (isDuplicatePrediction(prediction)) {
+                showMessage('This exact combination has already been selected. Please choose different values.', true);
+                return;
+            }
+            
+            const submitBtn = this.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Submitting...';
+            submitBtn.disabled = true;
+            
+            const sheetSuccess = await sendToGoogleSheets(prediction);
+            
+            predictions.push(prediction);
+            localStorage.setItem('babyPoolPredictions', JSON.stringify(predictions));
+            
+            this.reset();
+            showMessage(`Thank you ${prediction.name}! Your prediction has been submitted.${!sheetSuccess ? ' (Saved locally)' : ''}`);
+            
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            
+            updatePredictionsList();
+            updateCharts();
+        });
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeForm();
+            updatePredictionsList();
+            updateCharts();
+        });
+    </script>
+</body>
+</html>
