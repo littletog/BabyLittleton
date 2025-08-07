@@ -318,7 +318,7 @@
                         <button type="submit" class="submit-btn">Submit</button>
                         
                         <div class="scoring-note">
-                            <p>We’ll score each guess based on how close you are to the baby’s time of birth, weight, and length.</p>
+                            <p>We'll score each guess based on how close you are to the baby's time of birth, weight, and length.</p>
                             <ul style="padding-left: 1.5em;">
                                 <li>The closer you are, the more points you get!</li>
                                 <li>Time is worth 40 points, weight is 30, and length is 30.</li>
@@ -355,7 +355,7 @@
     <script>
         let predictions = JSON.parse(localStorage.getItem('babyPoolPredictions') || '[]');
         
-        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbwnVOjJAAqmhi3wRVbBF3CPGnFFrjWBcqyrgRjnA4LV7rB7eAUp_zHQfKD6JVewbD5L/exec';
+        const GOOGLE_SHEET_URL = 'https://script.google.com/macros/s/AKfycbw8kOQ_URgJIyBa1OIADIFhH-ciAmKijJzxHi1WCO_MegPTUPkpgwP6eKMG1GrHbNVr/exec';
         
         function initializeForm() {
             const months = ['August', 'September', 'October'];
@@ -422,6 +422,7 @@
         
         async function sendToGoogleSheets(prediction) {
             try {
+                console.log('Sending to Google Sheets:', prediction);
                 await fetch(GOOGLE_SHEET_URL, {
                     method: 'POST',
                     mode: 'no-cors',
@@ -433,6 +434,46 @@
                 console.error('Google Sheets error:', error);
                 return false;
             }
+        }
+        
+        async function fetchAllPredictions() {
+            try {
+                console.log('Fetching all predictions from Google Sheets...');
+                const response = await fetch(GOOGLE_SHEET_URL, {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Fetched all predictions:', data);
+                    
+                    if (data && Array.isArray(data)) {
+                        predictions = data.map(row => ({
+                            name: row.name || '',
+                            email: row.email || '',
+                            month: parseInt(row.month) || 0,
+                            day: parseInt(row.day) || 0,
+                            hour: parseInt(row.hour) || 0,
+                            minute: parseInt(row.minute) || 0,
+                            pounds: parseInt(row.pounds) || 0,
+                            ounces: parseInt(row.ounces) || 0,
+                            inches: parseInt(row.inches) || 0,
+                            quarter_inches: parseFloat(row.quarter_inches) || 0,
+                            firstName: row.firstName || '',
+                            timestamp: row.timestamp || Date.now()
+                        }));
+                        console.log('Processed predictions:', predictions.length, 'total');
+                        return true;
+                    }
+                }
+            } catch (error) {
+                console.error('Error fetching from Google Sheets:', error);
+                // Fall back to localStorage if Google Sheets fails
+                predictions = JSON.parse(localStorage.getItem('babyPoolPredictions') || '[]');
+                console.log('Using localStorage backup:', predictions.length, 'predictions');
+            }
+            return false;
         }
         
         function isDuplicatePrediction(formData) {
@@ -474,7 +515,14 @@
                 return;
             }
             
-            listDiv.innerHTML = predictions.map(pred => `
+            // Sort predictions by timestamp, most recent first
+            const sortedPredictions = [...predictions].sort((a, b) => {
+                const timestampA = a.timestamp || 0;
+                const timestampB = b.timestamp || 0;
+                return timestampB - timestampA; // Descending order (newest first)
+            });
+            
+            listDiv.innerHTML = sortedPredictions.map(pred => `
                 <div class="prediction-item">
                     <div>
                         <div class="prediction-name">${pred.name}</div>
@@ -689,8 +737,10 @@
             
             const sheetSuccess = await sendToGoogleSheets(prediction);
             
-            predictions.push(prediction);
-            localStorage.setItem('babyPoolPredictions', JSON.stringify(predictions));
+            // Add to localStorage as backup
+            let localPredictions = JSON.parse(localStorage.getItem('babyPoolPredictions') || '[]');
+            localPredictions.push(prediction);
+            localStorage.setItem('babyPoolPredictions', JSON.stringify(localPredictions));
             
             this.reset();
             showMessage(`Thank you ${prediction.name}! Your prediction has been submitted.${!sheetSuccess ? ' (Saved locally)' : ''}`);
@@ -698,29 +748,35 @@
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
             
-            updatePredictionsList();
-            updateCharts();
+            // Refresh all predictions from Google Sheets to show everyone's data
+            if (sheetSuccess) {
+                setTimeout(async () => {
+                    await fetchAllPredictions();
+                    updatePredictionsList();
+                    updateCharts();
+                }, 2000); // Wait 2 seconds for Google Sheets to process
+            } else {
+                // If Google Sheets failed, at least show the local prediction
+                predictions.push(prediction);
+                updatePredictionsList();
+                updateCharts();
+            }
         });
         
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('Page loaded, initializing...');
             initializeForm();
+            
+            // Try to load all predictions from Google Sheets first
+            const sheetsLoaded = await fetchAllPredictions();
+            
+            if (!sheetsLoaded) {
+                console.log('Google Sheets unavailable, using localStorage backup');
+            }
+            
             updatePredictionsList();
             updateCharts();
         });
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
