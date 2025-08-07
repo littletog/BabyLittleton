@@ -535,7 +535,7 @@
                         </div>
                     </div>
                     <div class="prediction-details">
-                        ${pred.pounds}lb ${pred.ounces}oz, ${pred.inches}${pred.quarter_inches > 0 ? '.' + (pred.quarter_inches * 4) : ''}"
+                        ${pred.pounds}lb ${pred.ounces}oz, ${(parseFloat(pred.inches) + parseFloat(pred.quarter_inches || 0)).toFixed(2).replace('.00', '')}"
                     </div>
                 </div>
             `).join('');
@@ -781,6 +781,7 @@
     </script>
 </body>
 </html>
+
 
 
 
